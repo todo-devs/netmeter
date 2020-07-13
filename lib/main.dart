@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
+      title: 'TODO Net Meter',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -35,6 +35,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   static const platform = const MethodChannel('todonetmeter_android');
   String _platformVersion = '';
+  bool _drawPermission = false;
+
+  @override
+  initState() {
+    super.initState();
+
+    _getDrawPermissionState();
+  }
 
   Future<void> _getPlatformVersion() async {
     String platformVersion;
@@ -48,6 +56,33 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _platformVersion = platformVersion;
     });
+  }
+
+  Future<bool> _getDrawPermissionState() async {
+    bool drawPermission;
+
+    try {
+      final result = await platform.invokeMethod("getDrawPermissionState");
+      drawPermission = result;
+    } catch (e) {
+      drawPermission = false;
+    }
+
+    setState(() {
+      _drawPermission = drawPermission;
+    });
+
+    return drawPermission;
+  }
+
+  Future<bool> _reqDrawPermission() async {
+    try {
+      await platform.invokeMethod("reqDrawPermission");
+    } catch (e) {
+      print(e.message);
+    }
+
+    return _getDrawPermissionState();
   }
 
   @override
@@ -66,7 +101,22 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             Padding(
               padding: EdgeInsets.all(10),
-              child: Text(_platformVersion),
+              child: Text(
+                _platformVersion,
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Text("Draw over other apps permission"),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Icon(
+                (_drawPermission ? Icons.check : Icons.block),
+                size: 64,
+                color: (_drawPermission ? Colors.green : Colors.red),
+              ),
             ),
             MaterialButton(
               child: Text("Test Flutter Channel",
@@ -74,9 +124,59 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Theme.of(context).primaryColor,
               onPressed: (Platform.isAndroid ? _getPlatformVersion : () {}),
             ),
+            MaterialButton(
+              child: Text("Request 'Draw over other apps' permission",
+                  style: TextStyle(color: Colors.white)),
+              color: Theme.of(context).primaryColor,
+              onPressed: (Platform.isAndroid
+                  ? () {
+                      showReqDrawDialog(context);
+                    }
+                  : () {}),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  showReqDrawDialog(BuildContext context) async {
+    if(await _getDrawPermissionState()) {
+      return;
+    }
+
+    // set up the buttons
+    Widget cancelButton = FlatButton(
+      child: Text("No"),
+      onPressed: () {
+        Navigator.pop(context);
+      },
+    );
+    Widget continueButton = FlatButton(
+      child: Text("Aceptar"),
+      onPressed: () async {
+        await _reqDrawPermission();
+        Navigator.pop(context);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Solicitud de permiso"),
+      content:
+          Text("Esta aplicación necesita permiso de superposición de pantalla"),
+      actions: [
+        cancelButton,
+        continueButton,
+      ],
+    );
+
+    // show the dialog
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
     );
   }
 }
