@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -9,6 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -29,6 +33,23 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  static const platform = const MethodChannel('todonetmeter_android');
+  String _platformVersion = '';
+
+  Future<void> _getPlatformVersion() async {
+    String platformVersion;
+    try {
+      final String result = await platform.invokeMethod("getPlatformVersion");
+      platformVersion = result;
+    } catch (e) {
+      platformVersion = e.message;
+    }
+
+    setState(() {
+      _platformVersion = platformVersion;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,12 +58,23 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: MaterialButton(
-          child: Text("Habilitar", style: TextStyle(color: Colors.white)),
-          color: Theme.of(context).primaryColor,
-          onPressed: () {
-
-          },
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Text("Platform Version: "),
+            ),
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Text(_platformVersion),
+            ),
+            MaterialButton(
+              child: Text("Test Flutter Channel",
+                  style: TextStyle(color: Colors.white)),
+              color: Theme.of(context).primaryColor,
+              onPressed: (Platform.isAndroid ? _getPlatformVersion : () {}),
+            ),
+          ],
         ),
       ),
     );
