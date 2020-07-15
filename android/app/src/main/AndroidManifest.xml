@@ -11,6 +11,9 @@
         android:name="io.flutter.app.FlutterApplication"
         android:label="netmeter"
         android:icon="@mipmap/ic_launcher">
+
+        <service android:name=".FloatingWindow" />
+
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
