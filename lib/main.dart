@@ -134,6 +134,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     }
                   : () {}),
             ),
+            MaterialButton(
+              child: Text("Show Traffic Stats",
+                  style: TextStyle(color: Colors.white)),
+              color: Theme.of(context).primaryColor,
+              onPressed: (Platform.isAndroid
+                  ? () async {
+                      await platform.invokeMethod("showWidget");
+                    }
+                  : () {}),
+            ),
           ],
         ),
       ),
@@ -141,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   showReqDrawDialog(BuildContext context) async {
-    if(await _getDrawPermissionState()) {
+    if (await _getDrawPermissionState()) {
       return;
     }
 
